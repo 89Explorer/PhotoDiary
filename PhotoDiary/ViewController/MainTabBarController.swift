@@ -46,7 +46,7 @@ class MainTabBarController: UITabBarController {
         customCenterButton.tintColor = .systemBlue
         customCenterButton.backgroundColor = .systemBackground
         customCenterButton.layer.cornerRadius = 32
-        customCenterButton.layer.shadowColor = UIColor.black.cgColor
+        customCenterButton.layer.shadowColor = UIColor.systemGray.cgColor
         customCenterButton.layer.shadowOpacity = 0.1
         customCenterButton.layer.shadowOffset = CGSize(width: 0, height: 2)
         customCenterButton.layer.shadowRadius = 4
