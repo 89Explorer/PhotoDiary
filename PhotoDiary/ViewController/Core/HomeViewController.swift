@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class HomeViewController: UIViewController {
     
@@ -13,11 +14,17 @@ class HomeViewController: UIViewController {
     private var currentYear: Int = Calendar.current.component(.year, from: Date())
     private var currentMonth: Int = Calendar.current.component(.month, from: Date())
     private var isCalendarVisible = false
+    var randomImageURLs: [Int: URL] = [:]
     
     
     // MARK: - UI Component
     private var dateButton: UIButton = UIButton()
     private var collectionView: UICollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
+    private var activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
     
     
     // MARK: - Life Cycle
@@ -27,7 +34,16 @@ class HomeViewController: UIViewController {
         setupNavigation()
         setupCollectionView()
         setupDateButton()
-        
+        setupIndicator()
+        collectionView.isHidden = true
+        activityIndicator.startAnimating()
+        preloadImagesIfNeeded()
+    
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        scrollToSelectedDay(Calendar.current.component(.day, from: Date()))
     }
     
     
@@ -43,7 +59,8 @@ class HomeViewController: UIViewController {
         formatter.locale = Locale(identifier: "en_US")
         formatter.dateFormat = "d, MMM"
         let dateText = formatter.string(from: Date())
-        dateTitle.text = dateText
+        //dateTitle.text = dateText
+        dateTitle.text = "투데이"
         
         let dateButton = UIBarButtonItem(customView: dateTitle)
         navigationItem.leftBarButtonItem = dateButton
@@ -67,7 +84,7 @@ extension HomeViewController {
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.isPagingEnabled = false
         collectionView.showsHorizontalScrollIndicator = false
-        collectionView.backgroundColor = .systemRed
+        collectionView.backgroundColor = .clear
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -115,6 +132,36 @@ extension HomeViewController {
         
     }
     
+    private func setupIndicator() {
+        view.addSubview(activityIndicator)
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
+    private func preloadImagesIfNeeded() {
+        let numberOfDays = numberOfDaysIn(month: currentMonth, year: currentYear)
+        
+        // 1. 이미지 URL 생성
+        ImageCacheManager.shared.preloadImages(forDays: numberOfDays)
+        
+        // 2. SDWebImage로 미리 다운로드 → 캐시에 저장됨
+        let urls = (1...numberOfDays).compactMap { ImageCacheManager.shared.url(for: $0) }
+        
+        SDWebImagePrefetcher.shared.prefetchURLs(urls) { [weak self] finishedCount, skippedCount in
+            guard let self = self else { return }
+            
+            // 3. 프리페칭 완료 시 로딩 멈추고 컬렉션 뷰 갱신
+            DispatchQueue.main.async {
+                self.activityIndicator.stopAnimating()
+                self.collectionView.isHidden = false
+                self.collectionView.reloadData()
+            }
+        }
+    }
+    
     private func updateMonthButtonTitle() {
         let title = String(format: "%d, %d", currentYear, currentMonth)
         var config = dateButton.configuration
@@ -151,9 +198,9 @@ extension HomeViewController {
             self.currentMonth = month
             self.updateMonthButtonTitle()
             self.toggleDateButtonIcon(isExpanded: false)
+            self.scrollToSelectedDay(1)
             self.collectionView.reloadData()
         }
-
         present(pickerVC, animated: true)
     }
 }
@@ -162,12 +209,51 @@ extension HomeViewController {
 // MARK: - Extension: UICollectionViewDelegate
 extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 10
+        return numberOfDaysIn(month: currentMonth, year: currentYear)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeCell.reuseIdentifier, for: indexPath)
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeCell.reuseIdentifier, for: indexPath) as? HomeCell else {
+            return UICollectionViewCell()
+        }
+        
+        let day = indexPath.item + 1
+        var components = DateComponents()
+        components.year = currentYear
+        components.month = currentMonth
+        components.day = day
+        
+        if let date = Calendar.current.date(from: components) {
+            
+            if let imageURL = ImageCacheManager.shared.url(for: day) {
+                cell.configure(date: date, imageURL: imageURL)
+            }
+        }
+        
         return cell
     }
 }
 
+
+// MARK: - Extension: Date -> CollectionView numberOfItemsInSection
+extension HomeViewController {
+    
+    // 날짜에 따른 일 수 계산
+    private func numberOfDaysIn(month: Int, year: Int) -> Int {
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = month
+        
+        let calendar = Calendar.current
+        let date = calendar.date(from: dateComponents)!
+        return calendar.range(of: .day, in: .month, for: date)?.count ?? 30
+    }
+    
+    // 날짜 선택 후 가운데로 스크롤 함수
+    private func scrollToSelectedDay(_ day: Int) {
+        let indexPath = IndexPath(item: day - 1, section: 0)
+        DispatchQueue.main.async {
+            self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+        }
+    }
+}

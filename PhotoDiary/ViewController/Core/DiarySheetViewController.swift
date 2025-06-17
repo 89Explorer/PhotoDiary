@@ -48,6 +48,8 @@ class DiarySheetViewController: UIViewController {
         button.setTitleColor(color, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
         button.layer.cornerRadius = 12
+        button.layer.borderColor = UIColor.label.cgColor
+        button.layer.borderWidth = 1.0
         button.layer.backgroundColor = UIColor.systemBackground.cgColor
         button.layer.shadowOpacity = 0.1
         button.layer.shadowRadius = 4

@@ -6,16 +6,23 @@
 //
 
 import UIKit
+import SDWebImage
 
 class HomeCell: UICollectionViewCell {
     
+    
+    // MARK: - Variable
     static let reuseIdentifier: String = "HomeCell"
     
+    
+    // MARK: - UI Component
     private let shadowContainerView = UIView()
     private let imageView = UIImageView()
     private let dateLabel = UILabel()
     private let optionButton = UIButton()
     
+    
+    // MARK: - Init
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupShadow()
@@ -26,6 +33,13 @@ class HomeCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil 
+    }
+    
+    
+    // MARK: - Function
     private func setupShadow() {
         contentView.addSubview(shadowContainerView)
         shadowContainerView.translatesAutoresizingMaskIntoConstraints = false
@@ -48,13 +62,13 @@ class HomeCell: UICollectionViewCell {
     private func setupUI() {
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .systemBlue
-        imageView.image = UIImage(named: "sample")
+        //imageView.image = UIImage(named: "sample")
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 12
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         dateLabel.font = .systemFont(ofSize: 32, weight: .bold)
-        dateLabel.text = "7, OCT"
+        dateLabel.text = "7, Mon"
         dateLabel.textColor = .label
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -85,5 +99,67 @@ class HomeCell: UICollectionViewCell {
             optionButton.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
+    
+    func configure(date: Date, imageURL: URL?) {
+        let calendar = Calendar.current
+        
+        // 날짜 포맷: 일(day)과 요일(EEE) 분리
+        let dayFormatter = DateFormatter()
+        dayFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dayFormatter.dateFormat = "d"
+        let dayString = dayFormatter.string(from: date)
+        
+        let weekdayFormatter = DateFormatter()
+        weekdayFormatter.locale = Locale(identifier: "en_US_POSIX")
+        weekdayFormatter.dateFormat = "EEE"
+        let weekdayString = weekdayFormatter.string(from: date)
+        
+        // 스타일 적용
+        let fullString = "\(dayString) \(weekdayString)"
+        let attributed = NSMutableAttributedString(string: fullString)
+        
+        // "7" 부분 (더 크게, 굵게)
+        if let dayRange = fullString.range(of: dayString) {
+            let nsRange = NSRange(dayRange, in: fullString)
+            attributed.addAttributes([
+                .font: UIFont.systemFont(ofSize: 44, weight: .bold)
+            ], range: nsRange)
+        }
+        
+        // "Mon" 부분 (작게, 보통)
+        if let weekdayRange = fullString.range(of: weekdayString) {
+            let nsRange = NSRange(weekdayRange, in: fullString)
+            attributed.addAttributes([
+                .font: UIFont.systemFont(ofSize: 14, weight: .regular)
+            ], range: nsRange)
+        }
+        
+        dateLabel.attributedText = attributed
+        
+        // 색상 설정 (공휴일/주말 포함)
+        let holidayFormatter = DateFormatter()
+        holidayFormatter.locale = Locale(identifier: "ko_KR")
+        holidayFormatter.dateFormat = "yyyy-MM-dd"
+        let dateString = holidayFormatter.string(from: date)
+        
+        let holidays: [String] = [
+            "2025-01-01", "2025-03-01", "2025-05-05", "2025-06-06",
+            "2025-08-15", "2025-10-03", "2025-10-09", "2025-12-25"
+        ]
+        let isHoliday = holidays.contains(dateString)
+        let weekday = calendar.component(.weekday, from: date)
+        
+        var textColor: UIColor = .label
+        if isHoliday || weekday == 1 {
+            textColor = .systemRed
+        } else if weekday == 7 {
+            textColor = .systemBlue
+        }
+        
+        dateLabel.textColor = textColor
+        
+        imageView.sd_setImage(with: imageURL, placeholderImage: nil, options: [.highPriority])
+    }
+    
 }
 
