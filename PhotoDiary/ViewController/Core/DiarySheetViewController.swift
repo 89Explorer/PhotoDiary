@@ -61,7 +61,7 @@ class DiarySheetViewController: UIViewController {
     
     @objc private func photoDiaryTapped() {
         dismiss(animated: true) {
-            let photoVC = PhotoDiaryViewController()
+            let photoVC = PhotoDiaryImagePickerViewController()
             let nav = UINavigationController(rootViewController: photoVC)
             nav.modalPresentationStyle = .fullScreen
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

@@ -62,13 +62,11 @@ class HomeCell: UICollectionViewCell {
     private func setupUI() {
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .systemBlue
-        //imageView.image = UIImage(named: "sample")
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 12
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         dateLabel.font = .systemFont(ofSize: 32, weight: .bold)
-        dateLabel.text = "7, Mon"
         dateLabel.textColor = .label
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
         

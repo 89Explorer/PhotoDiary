@@ -38,12 +38,12 @@ class HomeViewController: UIViewController {
         collectionView.isHidden = true
         activityIndicator.startAnimating()
         preloadImagesIfNeeded()
-    
+        scrollToSelectedDay(Calendar.current.component(.day, from: Date()))
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        scrollToSelectedDay(Calendar.current.component(.day, from: Date()))
+        //scrollToSelectedDay(Calendar.current.component(.day, from: Date()))
     }
     
     
@@ -59,8 +59,7 @@ class HomeViewController: UIViewController {
         formatter.locale = Locale(identifier: "en_US")
         formatter.dateFormat = "d, MMM"
         let dateText = formatter.string(from: Date())
-        //dateTitle.text = dateText
-        dateTitle.text = "투데이"
+        dateTitle.text = dateText
         
         let dateButton = UIBarButtonItem(customView: dateTitle)
         navigationItem.leftBarButtonItem = dateButton
