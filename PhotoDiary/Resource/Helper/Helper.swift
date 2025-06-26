@@ -35,3 +35,30 @@ class CenterSnapFlowLayout: UICollectionViewFlowLayout {
         return CGPoint(x: proposedContentOffset.x + minOffsetAdjustment, y: proposedContentOffset.y)
     }
 }
+
+
+/// 버튼의 터치범위 늘리는 방식
+//class EnlargedHitAreaButton: UIButton {
+//    var hitAreaInset = UIEdgeInsets(top: -20, left: -20, bottom: -20, right: -20)
+//
+//    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+//        let largerArea = bounds.inset(by: hitAreaInset)
+//        return largerArea.contains(point)
+//    }
+//}
+
+
+class EnlargedHitAreaButton: UIButton {
+    var hitAreaInset: UIEdgeInsets = .zero
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let largerArea = bounds.inset(by: hitAreaInset.inverted())
+        return largerArea.contains(point)
+    }
+}
+
+private extension UIEdgeInsets {
+    func inverted() -> UIEdgeInsets {
+        return UIEdgeInsets(top: -top, left: -left, bottom: -bottom, right: -right)
+    }
+}

@@ -16,12 +16,13 @@ class PhotoDiaryImagePickerViewController: UIViewController {
     private let maxSelectionCount: Int = 10
     private var selectedImages: [UIImage] = [] {
         didSet {
+            self.editButtonHidden = selectedImages.isEmpty
             DispatchQueue.main.async {
                 UIView.transition(with: self.mainImageView,
                                   duration: 0.25,
                                   options: .transitionCrossDissolve,
                                   animations: {
-                    self.mainImageView.image = self.selectedImages[self.currentIndex]
+                    self.mainImageView.image = self.selectedImages.first
                     self.collectionView.reloadData()
                 },
                                   completion: nil)
@@ -48,10 +49,19 @@ class PhotoDiaryImagePickerViewController: UIViewController {
         }
     }
     
+    private var editButtonHidden: Bool = true {
+        didSet {
+            DispatchQueue.main.async {
+                self.editButton.isHidden = self.editButtonHidden
+            }
+        }
+    }
+    
     // MARK: - UI Component
     private var mainImageView: UIImageView = UIImageView()
     private var collectionView: UICollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private var nextButton: UIButton = UIButton()
+    private var editButton: UIButton = UIButton()
     
     
     // MARK: - Life Cycle
@@ -105,6 +115,13 @@ class PhotoDiaryImagePickerViewController: UIViewController {
         print("showPhotoPicker tapped")
         checkPhotoLibraryPermission()
     }
+    
+    @objc private func didTappedEditButton() {
+        let editorVC = PhotoEditViewController(with: selectedImages[currentIndex])
+        editorVC.modalPresentationStyle = .fullScreen
+        editorVC.delegate = self
+        present(editorVC, animated: true)
+    }
 }
 
 
@@ -113,7 +130,11 @@ extension PhotoDiaryImagePickerViewController {
     private func setupUI() {
         mainImageView.contentMode = .scaleAspectFill
         mainImageView.layer.cornerRadius = 8
-        mainImageView.clipsToBounds = true
+        mainImageView.layer.masksToBounds = true
+//        mainImageView.layer.shadowColor = UIColor.systemGray.cgColor
+//        mainImageView.layer.shadowRadius = 8
+//        mainImageView.layer.shadowOpacity = 0.3
+//        mainImageView.layer.shadowOffset = CGSize(width: 0, height: 4)
         mainImageView.backgroundColor = .systemBackground
         
         let layout = UICollectionViewFlowLayout()
@@ -135,17 +156,29 @@ extension PhotoDiaryImagePickerViewController {
         nextButton.setTitle("글쓰러 가기", for: .normal)
         nextButton.setTitleColor(.label, for: .normal)
         nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        nextButton.backgroundColor = .systemGreen
+        nextButton.backgroundColor = .systemBlue
         nextButton.layer.cornerRadius = 8
         nextButton.layer.masksToBounds = true
+        
+        let imageconf = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold)
+        let editImage = UIImage(systemName: "wand.and.sparkles.inverse", withConfiguration: imageconf)
+        editButton.setImage(editImage, for: .normal)
+        editButton.tintColor = .label
+        editButton.backgroundColor = .systemBackground
+        editButton.layer.cornerRadius = 16
+        editButton.layer.masksToBounds = true
+        editButton.isHidden = editButtonHidden
+        editButton.addTarget(self, action: #selector(didTappedEditButton), for: .touchUpInside)
         
         view.addSubview(mainImageView)
         view.addSubview(collectionView)
         view.addSubview(nextButton)
+        //view.addSubview(editButton)
         
         mainImageView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         nextButton.translatesAutoresizingMaskIntoConstraints = false
+        //editButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             
@@ -162,7 +195,12 @@ extension PhotoDiaryImagePickerViewController {
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             nextButton.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 12),
-            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            
+//            editButton.trailingAnchor.constraint(equalTo: mainImageView.trailingAnchor, constant: -20),
+//            editButton.bottomAnchor.constraint(equalTo: mainImageView.bottomAnchor, constant: -20),
+//            editButton.widthAnchor.constraint(equalToConstant: 32),
+//            editButton.heightAnchor.constraint(equalToConstant: 32)
         ])
         
     }
@@ -252,5 +290,16 @@ extension PhotoDiaryImagePickerViewController: PHPickerViewControllerDelegate {
 extension PhotoDiaryImagePickerViewController: PhotoCellDelegate {
     func didTappedDeleteButton(_ cell: PhotoCell, didTapDeleteAt indexPath: IndexPath) {
         selectedImages.remove(at: indexPath.item)
+    }
+}
+
+
+// MARK: - Extension: PhotoDiaryImagePickerViewController
+extension PhotoDiaryImagePickerViewController: PhotoEditViewControllerDelegate {
+    func photoEditViewController(_ controller: PhotoEditViewController, didFinishEditing image: UIImage) {
+        // ✅ 편집된 이미지를 받았을 때 처리
+        self.mainImageView.image = image
+        self.selectedImages[currentIndex] = image
+        self.collectionView.reloadItems(at: [IndexPath(item: currentIndex, section: 0)])
     }
 }

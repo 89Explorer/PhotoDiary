@@ -25,6 +25,12 @@ class PhotoCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         contentView.backgroundColor = .clear
+        contentView.layer.shadowOpacity = 0.3
+        contentView.layer.shadowColor = UIColor.systemGray.cgColor
+        contentView.layer.cornerRadius = 4
+        contentView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        contentView.layer.shadowRadius = 8
+        
         seupUI()
     }
     

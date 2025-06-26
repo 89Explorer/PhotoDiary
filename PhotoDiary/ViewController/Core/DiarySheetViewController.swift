@@ -51,7 +51,7 @@ class DiarySheetViewController: UIViewController {
         button.layer.borderColor = UIColor.label.cgColor
         button.layer.borderWidth = 1.0
         button.layer.backgroundColor = UIColor.systemBackground.cgColor
-        button.layer.shadowOpacity = 0.1
+        button.layer.shadowOpacity = 0.3
         button.layer.shadowRadius = 4
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
         button.addTarget(self, action: action, for: .touchUpInside)

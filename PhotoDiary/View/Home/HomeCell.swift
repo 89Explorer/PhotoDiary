@@ -54,7 +54,7 @@ class HomeCell: UICollectionViewCell {
         shadowContainerView.layer.shadowColor = UIColor.systemGray.cgColor
         shadowContainerView.layer.shadowOpacity = 0.3
         shadowContainerView.layer.shadowOffset = CGSize(width: 0, height: 4)
-        shadowContainerView.layer.shadowRadius = 8
+        shadowContainerView.layer.shadowRadius = 12
         shadowContainerView.layer.cornerRadius = 12
         shadowContainerView.backgroundColor = .clear
     }
